@@ -154,8 +154,8 @@ static void epd_controller_init(void)
     epd_wait_busy();
 
     epd_write_cmd(0x01);  /* Driver Output Control */
-    epd_write_data(0xF9); /* [0] = (122-1) 低 8 位 */
-    epd_write_data(0x00); /* [1] = (122-1) 高位 */
+    epd_write_data(0x79); /* [0] = (122-1) = 0x79, 低 8 位 */
+    epd_write_data(0x00); /* [1] = 高位 */
     epd_write_data(0x00); /* [2] = GD=0, SM=0, TB=0 */
 
     epd_write_cmd(0x11);  /* Data Entry Mode */
@@ -163,7 +163,7 @@ static void epd_controller_init(void)
 
     epd_write_cmd(0x44);  /* Set RAM X Start/End */
     epd_write_data(0x00);
-    epd_write_data(0x18); /* 0x18 = 24 = (250/8 - 1) */
+    epd_write_data(0x1F); /* 0x1F = 31: 32 字节覆盖 250 像素 */
 
     epd_write_cmd(0x45);  /* Set RAM Y Start/End */
     epd_write_data(0xF9); /* 0xF9 = 249 = (122-1) 低 8 位 */
@@ -194,9 +194,9 @@ static void epd_controller_init(void)
 
 void epd_init(void)
 {
+    epd_spi_init();
     POWER_ON();
     platform_delay_ms(100);
-    epd_spi_init();
     epd_hw_reset();
     epd_controller_init();
 }
@@ -230,10 +230,12 @@ void epd_clear(void)
     epd_write_data(0xF9);
     epd_write_data(0x00);
 
-    /* 全白 */
+    /* 全白：逐行发送，每行 32 字节 */
     epd_write_cmd(0x24);
-    for (uint32_t i = 0; i < EPD_BUF_SIZE; i++) {
-        epd_write_data(0xFF);
+    for (uint32_t y = 0; y < EPD_HEIGHT; y++) {
+        for (uint32_t x = 0; x < EPD_WIDTH_BYTES; x++) {
+            epd_write_data(0xFF);
+        }
     }
 
     /* 刷新 */

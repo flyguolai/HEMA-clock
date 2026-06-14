@@ -12,7 +12,7 @@
 
 #include "ssd1680.h"
 
-/* 帧缓冲：250x122 像素，每字节 8 像素，共 3813 字节 */
+/* 帧缓冲：250x122 像素，每行 32 字节（250 像素向上对齐），共 3904 字节 */
 static uint8_t frame_buffer[EPD_BUF_SIZE];
 
 /**
@@ -25,12 +25,11 @@ static uint8_t frame_buffer[EPD_BUF_SIZE];
 static void generate_test_pattern(void)
 {
     for (int y = 0; y < EPD_HEIGHT; y++) {
-        for (int x_byte = 0; x_byte < (EPD_WIDTH / 8); x_byte++) {
-            int col_group = x_byte / 1;   /* 每 1 字节 (8px) 切换 */
-            if ((col_group / 1) % 2 == 0) {
-                frame_buffer[y * (EPD_WIDTH / 8) + x_byte] = 0x00; /* 黑 */
+        for (int x_byte = 0; x_byte < EPD_WIDTH_BYTES; x_byte++) {
+            if ((x_byte % 2) == 0) {
+                frame_buffer[y * EPD_WIDTH_BYTES + x_byte] = 0x00; /* 黑 */
             } else {
-                frame_buffer[y * (EPD_WIDTH / 8) + x_byte] = 0xFF; /* 白 */
+                frame_buffer[y * EPD_WIDTH_BYTES + x_byte] = 0xFF; /* 白 */
             }
         }
     }
@@ -43,8 +42,8 @@ static void generate_test_pattern_h(void)
 {
     for (int y = 0; y < EPD_HEIGHT; y++) {
         uint8_t val = ((y / 8) % 2 == 0) ? 0x00 : 0xFF;
-        for (int x_byte = 0; x_byte < (EPD_WIDTH / 8); x_byte++) {
-            frame_buffer[y * (EPD_WIDTH / 8) + x_byte] = val;
+        for (int x_byte = 0; x_byte < EPD_WIDTH_BYTES; x_byte++) {
+            frame_buffer[y * EPD_WIDTH_BYTES + x_byte] = val;
         }
     }
 }
@@ -55,13 +54,13 @@ static void generate_test_pattern_h(void)
 static void generate_test_pattern_checker(void)
 {
     for (int y = 0; y < EPD_HEIGHT; y++) {
-        for (int x_byte = 0; x_byte < (EPD_WIDTH / 8); x_byte++) {
+        for (int x_byte = 0; x_byte < EPD_WIDTH_BYTES; x_byte++) {
             int block_y = (y / 16) % 2;
             int block_x = (x_byte / 2) % 2;  /* 每 16 像素一块 */
             if (block_y == block_x) {
-                frame_buffer[y * (EPD_WIDTH / 8) + x_byte] = 0x00;
+                frame_buffer[y * EPD_WIDTH_BYTES + x_byte] = 0x00;
             } else {
-                frame_buffer[y * (EPD_WIDTH / 8) + x_byte] = 0xFF;
+                frame_buffer[y * EPD_WIDTH_BYTES + x_byte] = 0xFF;
             }
         }
     }

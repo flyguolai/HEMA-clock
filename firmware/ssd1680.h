@@ -13,7 +13,8 @@
 /* 屏幕参数 */
 #define EPD_WIDTH       250
 #define EPD_HEIGHT      122
-#define EPD_BUF_SIZE    ((EPD_WIDTH / 8) * EPD_HEIGHT)  /* 3813 bytes */
+#define EPD_WIDTH_BYTES ((EPD_WIDTH + 7) / 8)           /* 32 bytes/行 */
+#define EPD_BUF_SIZE    (EPD_WIDTH_BYTES * EPD_HEIGHT)   /* 3904 bytes */
 
 /**
  * 初始化墨水屏硬件（GPIO + SPI + 控制器）
