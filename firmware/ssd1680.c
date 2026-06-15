@@ -48,11 +48,22 @@
 
 /* ============ 延时函数 ============ */
 
+/*
+ * 平台延时（毫秒级）
+ *
+ * 当前实现为循环计数延时，精度依赖 CPU 主频：
+ *   - DA14585 默认使用内部 RC 16MHz，约 16000 cycles/ms
+ *   - 若 SDK 配置了外部 XTAL 或分频，需调整循环值
+ *
+ * TODO: 实际集成时替换为 SDK 硬件定时器（timer0），以获得精确延时、
+ *       更好的低功耗表现。SDK 提供 timer0_delay_ms() 或等价函数。
+ */
 static void platform_delay_ms(uint32_t ms)
 {
-    /* DA14585 粗略延时，CPU 主频 16MHz 时约 16000 cycles/ms */
+    /* 每毫秒约 16000 个 NOP 周期 @ 16MHz，含循环开销 */
     for (uint32_t i = 0; i < ms; i++) {
         for (volatile uint32_t j = 0; j < 16000; j++) {
+            /* GCC: 使用 __asm__ __volatile__("nop") 替代 */
             __asm("nop");
         }
     }
@@ -77,14 +88,18 @@ static void hw_spi_send_byte(uint8_t data)
 
 static bool epd_is_busy(void)
 {
-    return GPIO_GetPinStatus(EPD_PORT_BUSY, EPD_PIN_BUSY);
+    /*
+     * BUSY 低电平有效（LOW = 忙，HIGH = 空闲）
+     * 来源: references/epd_pinout.md 实测——"平时 3.3V，EPD 处理时拉到 0V"
+     */
+    return !GPIO_GetPinStatus(EPD_PORT_BUSY, EPD_PIN_BUSY);
 }
 
 static void epd_wait_busy(void)
 {
-    /* BUSY 高电平表示屏幕忙，等待拉低 */
+    /* BUSY 低电平表示屏幕忙，等待拉高 */
     while (epd_is_busy()) {
-        /* 空循环，超时由看门狗或外部复位兜底 */
+        /* 空循环，超时由看门狗兜底 */
     }
 }
 

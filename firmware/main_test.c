@@ -8,11 +8,27 @@
  *   1. 在 Keil 中新建 DA14585 工程，将本文件和 ssd1680.c/ssd1680.h 加入
  *   2. 添加 SDK 路径到 Include Paths
  *   3. 编译 → J-Link 烧录 → 观察屏幕
+ *
+ * 工具链兼容性：
+ *   - Keil MDK (ARMCC):   __asm("wfi") / __asm("nop")
+ *   - ARM GCC:            需替换为 __asm__ __volatile__("wfi") 等
+ *   本文件当前按 Keil 语法编写。
+ *
+ * 前置条件：
+ *   DA14585 SDK 中 system_init() / SystemInit() 必须在 epd_init() 前调用，
+ *   以配置系统时钟、使能 GPIO 模块电源。startup 文件通常会自动调用 SystemInit()，
+ *   但需确认其实现开启了所需外设时钟。
  */
 
 #include "ssd1680.h"
 
-/* 帧缓冲：250x122 像素，每行 32 字节（250 像素向上对齐），共 3904 字节 */
+/*
+ * 帧缓冲：250x122 像素，每行 32 字节（250 像素向上对齐），共 3904 字节
+ *
+ * 注意：DA14585 在二次启动模式下固件运行于 RAM（0x07FC0000），
+ * 该 buffer 会占用 ~4KB 的 .bss / .data 段。链接脚本需保证 RW/ZI
+ * 区域足够容纳此 buffer 及其它运行时数据。
+ */
 static uint8_t frame_buffer[EPD_BUF_SIZE];
 
 /**
@@ -68,6 +84,12 @@ static void generate_test_pattern_checker(void)
 
 int main(void)
 {
+    /*
+     * 若 startup 文件未自动调用 SystemInit()，需在 epd_init() 前手动调用：
+     *   system_init();
+     * 否则 GPIO 模块时钟未使能，引脚操作无效。
+     */
+
     /* 初始化墨水屏（GPIO + SPI + SSD1680 控制器） */
     epd_init();
 
@@ -93,6 +115,7 @@ int main(void)
 
     /* 主循环（实际产品中可在此做 BLE / 定时唤醒等） */
     while (1) {
+        /* GCC 用户: __asm__ __volatile__("wfi") */
         __asm("wfi");  /* 等待中断，低功耗 */
     }
 

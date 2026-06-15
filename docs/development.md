@@ -96,15 +96,31 @@ GPIO_SetInactive(LED_PORT, LED_PIN);  // 熄灭
 
 ### SPI 配置（墨水屏）
 
+以下引脚定义来自 [epd_pinout.md](../references/epd_pinout.md) 实板测量数据，与 firmware/ssd1680.c 保持一致。
+
 ```c
-// SPI 引脚定义
-#define EPD_BUSY    GPIO_PIN_0  // P2_0
-#define EPD_RST     GPIO_PIN_7  // P0_7
-#define EPD_DC      GPIO_PIN_5  // P0_5
-#define EPD_CS      GPIO_PIN_1  // P2_1
-#define EPD_SDI     GPIO_PIN_6  // P0_6
-#define EPD_SCK     GPIO_PIN_0  // P0_0
-#define EPD_POWER   GPIO_PIN_3  // P2_3
+// SPI 数据/时钟
+#define EPD_PORT_MOSI  GPIO_PORT_2
+#define EPD_PIN_MOSI   GPIO_PIN_2      // P2_2
+
+#define EPD_PORT_SCK   GPIO_PORT_2
+#define EPD_PIN_SCK    GPIO_PIN_0      // P2_0
+
+// 控制线
+#define EPD_PORT_CS    GPIO_PORT_2
+#define EPD_PIN_CS     GPIO_PIN_1      // P2_1
+
+#define EPD_PORT_DC    GPIO_PORT_0
+#define EPD_PIN_DC     GPIO_PIN_1      // P0_1
+
+#define EPD_PORT_RST   GPIO_PORT_0
+#define EPD_PIN_RST    GPIO_PIN_7      // P0_7
+
+#define EPD_PORT_BUSY  GPIO_PORT_1
+#define EPD_PIN_BUSY   GPIO_PIN_1      // P1_1
+
+#define EPD_PORT_POWER GPIO_PORT_2
+#define EPD_PIN_POWER  GPIO_PIN_3      // P2_3 (boost 升压电路开关)
 ```
 
 ## 调试技巧
